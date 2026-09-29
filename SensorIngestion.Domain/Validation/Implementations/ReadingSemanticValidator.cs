@@ -11,8 +11,9 @@ public class ReadingSemanticValidator : IReadingSemanticValidator
     {
         ArgumentNullException.ThrowIfNull(rules);
 
-        if (!_rules.Any())
+        if (rules.Count == 0)
             throw new ArgumentException("At least one semantic rule is required.", nameof(rules));
+
         _rules = rules.ToList();
     }
 
