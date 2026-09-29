@@ -1,0 +1,56 @@
+[
+  {
+    "ruleId": "temp-sustained-above-80-pdf-example",
+    "name": "Overheating Sustained",
+    "enabled": false,
+    "deviceId": "PUMP-01",
+    "metric": "temperature",
+    "operator": "SustainedAbove",
+    "threshold": 80,
+    "durationSeconds": 30
+  },
+  {
+    "ruleId": "pump01-temp-sustained-above-69",
+    "name": "PUMP-01 Temperature Sustained Above 69",
+    "enabled": true,
+    "deviceId": "PUMP-01",
+    "metric": "temperature",
+    "operator": "SustainedAbove",
+    "threshold": 69,
+    "durationSeconds": 30
+  },
+  {
+    "ruleId": "temp-greater-than-74",
+    "name": "High Temperature",
+    "enabled": true,
+    "metric": "temperature",
+    "operator": "GreaterThan",
+    "threshold": 74
+  },
+  {
+    "ruleId": "pressure-greater-than-or-equal-10",
+    "name": "High Pressure",
+    "enabled": true,
+    "metric": "pressure",
+    "operator": "GreaterThanOrEqual",
+    "threshold": 10
+  },
+  {
+    "ruleId": "vibration-less-than-0",
+    "name": "Negative Vibration",
+    "enabled": true,
+    "metric": "vibration",
+    "operator": "LessThan",
+    "threshold": 0
+  },
+  {
+    "ruleId": "fan03-vibration-between-5-and-7",
+    "name": "FAN-03 Vibration Band",
+    "enabled": true,
+    "deviceId": "FAN-03",
+    "metric": "vibration",
+    "operator": "Between",
+    "minValue": 5,
+    "maxValue": 7
+  }
+]
