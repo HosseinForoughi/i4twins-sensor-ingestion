@@ -18,4 +18,8 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SensorIngestion.Infrastructure\SensorIngestion.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
