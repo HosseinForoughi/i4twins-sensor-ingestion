@@ -121,3 +121,8 @@ _ReSharper*/
 
 # Docker (local override compose files with secrets)
 docker-compose.override.yml
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
