@@ -13,8 +13,7 @@ public class ReadingSemanticValidator : IReadingSemanticValidator
 
         if (rules.Count == 0)
             throw new ArgumentException("At least one semantic rule is required.", nameof(rules));
-
-        _rules = rules.ToList();
+        _rules = rules;
     }
 
     public ReadingValidationResult Validate(ReadingCandidate candidate)

@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddDbContext<SensorIngestionDbContext>(options => options.UseSqlite(connectionString));
 
         services.AddScoped<IRuleRepository, RuleRepository>();
+        services.AddScoped<IReadingRepository, ReadingRepository>();
     }
 
     private static void AddRulesSeed(IServiceCollection services)
