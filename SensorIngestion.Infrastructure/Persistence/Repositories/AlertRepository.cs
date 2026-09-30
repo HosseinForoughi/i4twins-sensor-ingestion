@@ -13,10 +13,18 @@ public class AlertRepository : IAlertRepository
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
 
-    public async Task<List<Alert>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Alert>> ListForStreamAsync(string ruleId,
+        string deviceId,
+        string metric,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(metric);
+
         return await _dbContext.Alerts
             .AsNoTracking()
+            .Where(a => a.RuleId == ruleId && a.DeviceId == deviceId && a.Metric == metric)
             .OrderBy(a => a.StartTs)
             .ToListAsync(cancellationToken);
     }

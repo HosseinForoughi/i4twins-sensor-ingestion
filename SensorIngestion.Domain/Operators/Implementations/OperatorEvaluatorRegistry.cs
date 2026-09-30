@@ -7,13 +7,14 @@ public class OperatorEvaluatorRegistry : IOperatorEvaluatorRegistry
 {
     private readonly Dictionary<RuleOperator, IOperatorEvaluator> _evaluators;
 
-    public OperatorEvaluatorRegistry(List<IOperatorEvaluator> evaluators)
+    public OperatorEvaluatorRegistry(IEnumerable<IOperatorEvaluator> evaluators)
     {
         ArgumentNullException.ThrowIfNull(evaluators);
 
         _evaluators = evaluators.ToDictionary(e => e.Operator);
 
-        if (_evaluators.Count == 0) throw new ArgumentException("At least one operator evaluator is required.", nameof(evaluators));
+        if (_evaluators.Count == 0)
+            throw new ArgumentException("At least one operator evaluator is required.", nameof(evaluators));
     }
 
     public IOperatorEvaluator GetEvaluator(RuleOperator @operator)

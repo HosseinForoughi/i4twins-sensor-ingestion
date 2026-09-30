@@ -8,9 +8,13 @@ public interface IReadingRepository
 
     Task<int> CountAsync(CancellationToken cancellationToken = default);
 
-    Task<List<SensorReading>> ListUnprocessedAsync(CancellationToken cancellationToken = default);
+    Task<List<SensorReading>> ListUnprocessedBatchAsync(int batchSize, CancellationToken cancellationToken = default);
 
-    Task<List<SensorReading>> ListAllTrackedAsync(CancellationToken cancellationToken = default);
+    Task<List<string>> ListDeviceIdsForMetricAsync(string metric, CancellationToken cancellationToken = default);
+
+    Task<List<SensorReading>> ListByDeviceAndMetricTrackedAsync(string deviceId, string metric, CancellationToken cancellationToken = default);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    void ClearTracking();
 }

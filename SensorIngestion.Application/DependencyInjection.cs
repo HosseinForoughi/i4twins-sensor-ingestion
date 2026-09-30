@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.Configure<RulesOptions>(configuration.GetSection(RulesOptions.SectionName));
         services.Configure<ReadingsOptions>(configuration.GetSection(ReadingsOptions.SectionName));
         services.Configure<AlertingOptions>(configuration.GetSection(AlertingOptions.SectionName));
+        services.Configure<ProcessingOptions>(configuration.GetSection(ProcessingOptions.SectionName));
 
         AddDomainServices(services);
 

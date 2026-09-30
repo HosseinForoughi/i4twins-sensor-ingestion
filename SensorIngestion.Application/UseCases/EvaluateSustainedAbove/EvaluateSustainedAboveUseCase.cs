@@ -42,8 +42,7 @@ public class EvaluateSustainedAboveUseCase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<EvaluateSustainedAboveResult> ExecuteAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<EvaluateSustainedAboveResult> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         if (_alertingOptions.CooldownMinutes <= 0)
             throw new InvalidOperationException("Alerting:CooldownMinutes must be a positive integer.");
@@ -54,62 +53,87 @@ public class EvaluateSustainedAboveUseCase
             .Where(r => r.Enabled && r.Operator == RuleOperator.SustainedAbove)
             .ToList();
 
-        var readings = await _readingRepository.ListAllTrackedAsync(cancellationToken);
-        var existingAlerts = await _alertRepository.ListAsync(cancellationToken);
-
         var qualifyingEpisodeCount = 0;
         var acceptedEpisodes = new List<SustainedEpisode>();
         var suppressedCount = 0;
         var readingViolationsAdded = 0;
+        var alertsInserted = 0;
 
         foreach (var rule in sustainedRules)
         {
-            var evaluation = _sustainedAboveEvaluator.Evaluate(rule, readings);
-            qualifyingEpisodeCount += evaluation.EpisodeCount;
+            var deviceIds = await ResolveDeviceIdsAsync(rule, cancellationToken);
 
-            readingViolationsAdded += _violationApplier.Apply(
-                rule,
-                evaluation.QualifyingEpisodes,
-                readings);
-
-            var cooldownResult = _alertCooldownFilter.Filter(
-                evaluation.QualifyingEpisodes,
-                existingAlerts,
-                cooldown);
-
-            acceptedEpisodes.AddRange(cooldownResult.Accepted);
-            suppressedCount += cooldownResult.SuppressedCount;
-
-            foreach (var episode in cooldownResult.Accepted)
+            foreach (var deviceId in deviceIds)
             {
-                existingAlerts.Add(
-                    new Alert(episode.RuleId, episode.DeviceId,
-                        episode.Metric,
-                        episode.StartTs,
-                        episode.EndTs,
-                        episode.PeakValue));
+                var readings = await _readingRepository.ListByDeviceAndMetricTrackedAsync(
+                    deviceId: deviceId,
+                    metric: rule.Metric,
+                    cancellationToken);
+
+                if (readings.Count == 0)
+                    continue;
+
+                var evaluation = _sustainedAboveEvaluator.Evaluate(rule, readings);
+                qualifyingEpisodeCount += evaluation.EpisodeCount;
+
+                readingViolationsAdded += _violationApplier.Apply(
+                    rule,
+                    evaluation.QualifyingEpisodes,
+                    readings);
+
+                var existingAlerts = await _alertRepository.ListForStreamAsync(
+                    ruleId: rule.RuleId,
+                    deviceId: deviceId,
+                    metric: rule.Metric,
+                    cancellationToken);
+
+                var cooldownResult = _alertCooldownFilter.Filter(
+                    evaluation.QualifyingEpisodes,
+                    existingAlerts,
+                    cooldown);
+
+                acceptedEpisodes.AddRange(cooldownResult.Accepted);
+                suppressedCount += cooldownResult.SuppressedCount;
+
+                var streamAlerts = cooldownResult.Accepted
+                    .Select(e => new Alert(
+                        ruleId: e.RuleId,
+                        deviceId: e.DeviceId,
+                        metric: e.Metric,
+                        startTs: e.StartTs,
+                        endTs: e.EndTs,
+                        peakValue: e.PeakValue))
+                    .ToList();
+
+                alertsInserted += await _alertRepository.InsertNewAsync(streamAlerts, cancellationToken);
+                await _readingRepository.SaveChangesAsync(cancellationToken);
+                _readingRepository.ClearTracking();
             }
         }
 
-        var alertsToInsert = acceptedEpisodes.Select(e => new Alert(e.RuleId, e.DeviceId, e.Metric, e.StartTs, e.EndTs, e.PeakValue))
-            .ToList();
-
-        var inserted = await _alertRepository.InsertNewAsync(alertsToInsert, cancellationToken);
-        await _readingRepository.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("SustainedAbove finished. Rules={Rules}, Episodes={Episodes}, AlertsAccepted={Accepted}, Suppressed={Suppressed}, Inserted={Inserted}, ReadingViolations={Violations}.",
+        _logger.LogInformation(
+            "SustainedAbove finished. Rules={Rules}, Episodes={Episodes}, AlertsAccepted={Accepted}, Suppressed={Suppressed}, Inserted={Inserted}, ReadingViolations={Violations}.",
             sustainedRules.Count,
             qualifyingEpisodeCount,
             acceptedEpisodes.Count,
             suppressedCount,
-            inserted,
+            alertsInserted,
             readingViolationsAdded);
 
-        return new EvaluateSustainedAboveResult(rulesEvaluated: sustainedRules.Count,
+        return new EvaluateSustainedAboveResult(
+            rulesEvaluated: sustainedRules.Count,
             qualifyingEpisodes: qualifyingEpisodeCount,
             alertsAccepted: acceptedEpisodes.Count,
             alertsSuppressedByCooldown: suppressedCount,
-            alertsInserted: inserted,
+            alertsInserted: alertsInserted,
             readingViolationsAdded: readingViolationsAdded);
+    }
+
+    private async Task<List<string>> ResolveDeviceIdsAsync(Rule rule, CancellationToken cancellationToken)
+    {
+        if (rule.DeviceId is not null)
+            return [rule.DeviceId];
+
+        return await _readingRepository.ListDeviceIdsForMetricAsync(rule.Metric, cancellationToken);
     }
 }
