@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using SensorIngestion.Api.Models;
+using SensorIngestion.Application.Observability;
 using SensorIngestion.Application.UseCases.ProcessPipeline;
+using System.Diagnostics;
 
 namespace SensorIngestion.Api.Controllers;
 
@@ -13,10 +16,12 @@ namespace SensorIngestion.Api.Controllers;
 public class IngestController : ControllerBase
 {
     private readonly ProcessPipelineUseCase _processPipeline;
+    private readonly ILogger<IngestController> _logger;
 
-    public IngestController(ProcessPipelineUseCase processPipeline)
+    public IngestController(ProcessPipelineUseCase processPipeline, ILogger<IngestController> logger)
     {
         _processPipeline = processPipeline ?? throw new ArgumentNullException(nameof(processPipeline));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -33,11 +38,23 @@ public class IngestController : ControllerBase
     /// </remarks>
     /// <param name="cancellationToken">Request cancellation token.</param>
     /// <response code="200">Pipeline completed; returns processing counts for ingest, instantaneous rules, and SustainedAbove.</response>
+    /// <response code="500">Unexpected processing failure.</response>
     [HttpPost]
     [ProducesResponseType(typeof(ProcessPipelineResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProcessPipelineResult>> Post(CancellationToken cancellationToken)
     {
+        using var activity = ApplicationTelemetry.StartActivity("Ingest.Post");
+        _logger.LogInformation("Ingest endpoint invoked.");
+
         var result = await _processPipeline.ExecuteAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Ingest endpoint completed. Inserted={Inserted}, AlertsInserted={AlertsInserted}",
+            result.Ingest.NewlyInsertedReadings,
+            result.SustainedAbove.AlertsInserted);
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Ok(result);
     }
 }

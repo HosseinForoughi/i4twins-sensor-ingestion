@@ -1,8 +1,9 @@
-using System.Net;
-using System.Net.Http.Json;
+using SensorIngestion.Api.Models;
 using SensorIngestion.Application.UseCases.GetAggregates;
 using SensorIngestion.Application.UseCases.ProcessPipeline;
 using SensorIngestion.Tests.EndToEnd.Fixtures;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace SensorIngestion.Tests.EndToEnd.Api;
 
@@ -72,5 +73,31 @@ public class IngestAndAggregatesApiTests
         Assert.NotNull(secondBody);
         Assert.Equal(0, secondBody!.Ingest.NewlyInsertedReadings);
         Assert.Equal(0, secondBody.SustainedAbove.AlertsInserted);
+    }
+
+    [Fact]
+    public async Task GetAggregates_WhenRangeInvalid_ReturnsBadRequestWithCorrelation()
+    {
+        // Arrange
+        const string correlationId = "test-correlation-123";
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "/api/aggregates?deviceId=PUMP-01&metric=temperature" +
+            "&from=2025-06-01T09:00:00Z&to=2025-06-01T08:00:00Z&bucketSeconds=60");
+        request.Headers.Add("X-Correlation-Id", correlationId);
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("X-Correlation-Id", out var headerValues));
+        Assert.Equal(correlationId, headerValues.Single());
+
+        var body = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+        Assert.NotNull(body);
+        Assert.False(string.IsNullOrWhiteSpace(body!.Error));
+        Assert.Equal(correlationId, body.CorrelationId);
+        Assert.False(string.IsNullOrWhiteSpace(body.TraceId));
     }
 }

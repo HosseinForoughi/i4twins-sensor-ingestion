@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SensorIngestion.Application.Observability;
 using SensorIngestion.Application.UseCases.EvaluateRules;
 using SensorIngestion.Application.UseCases.EvaluateSustainedAbove;
 using SensorIngestion.Application.UseCases.IngestReadings;
@@ -25,13 +26,40 @@ public class ProcessPipelineUseCase
 
     public async Task<ProcessPipelineResult> ExecuteAsync(CancellationToken cancellationToken = default)
     {
-        var ingest = await _ingestReadings.ExecuteAsync(cancellationToken);
-        var instantaneous = await _evaluateInstantaneousRules.ExecuteAsync(cancellationToken);
-        var sustained = await _evaluateSustainedAbove.ExecuteAsync(cancellationToken);
+        using var activity = ApplicationTelemetry.StartActivity("Pipeline.Execute");
+        _logger.LogInformation("Processing pipeline started.");
 
-        var result = new ProcessPipelineResult(ingest, instantaneous, sustained);
-        LogProcessingReport(result);
-        return result;
+        try
+        {
+            IngestReadingsResult ingest;
+            using (ApplicationTelemetry.StartActivity("Pipeline.Ingest"))
+            {
+                ingest = await _ingestReadings.ExecuteAsync(cancellationToken);
+            }
+
+            EvaluateInstantaneousRulesResult instantaneous;
+            using (ApplicationTelemetry.StartActivity("Pipeline.InstantaneousRules"))
+            {
+                instantaneous = await _evaluateInstantaneousRules.ExecuteAsync(cancellationToken);
+            }
+
+            EvaluateSustainedAboveResult sustained;
+            using (ApplicationTelemetry.StartActivity("Pipeline.SustainedAbove"))
+            {
+                sustained = await _evaluateSustainedAbove.ExecuteAsync(cancellationToken);
+            }
+
+            var result = new ProcessPipelineResult(ingest, instantaneous, sustained);
+            LogProcessingReport(result);
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Ok);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
+            _logger.LogError(ex, "Processing pipeline failed.");
+            throw;
+        }
     }
 
     private void LogProcessingReport(ProcessPipelineResult result)

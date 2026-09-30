@@ -54,7 +54,8 @@ public static class DependencyInjection
         services.AddSingleton<IReadingSemanticRule, SequenceRequiredRule>();
         services.AddSingleton<IReadingSemanticRule, ValueFiniteRule>();
         services.AddSingleton<IReadingSemanticRule, TimestampValidRule>();
-        services.AddSingleton<IReadingSemanticValidator, ReadingSemanticValidator>();
+        services.AddSingleton<IReadingSemanticValidator>(sp =>
+            new ReadingSemanticValidator(sp.GetServices<IReadingSemanticRule>().ToList()));
 
         services.AddSingleton<IReadingDeduplicator, FirstWinsReadingDeduplicator>();
 
@@ -64,7 +65,8 @@ public static class DependencyInjection
         services.AddSingleton<IOperatorEvaluator, LessThanOrEqualOperatorEvaluator>();
         services.AddSingleton<IOperatorEvaluator, EqualOperatorEvaluator>();
         services.AddSingleton<IOperatorEvaluator, BetweenOperatorEvaluator>();
-        services.AddSingleton<IOperatorEvaluatorRegistry, OperatorEvaluatorRegistry>();
+        services.AddSingleton<IOperatorEvaluatorRegistry>(sp =>
+            new OperatorEvaluatorRegistry(sp.GetServices<IOperatorEvaluator>().ToList()));
 
         services.AddSingleton<IInstantaneousRuleEngine, InstantaneousRuleEngine>();
 
