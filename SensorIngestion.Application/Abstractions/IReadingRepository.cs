@@ -10,5 +10,7 @@ public interface IReadingRepository
 
     Task<List<SensorReading>> ListUnprocessedAsync(CancellationToken cancellationToken = default);
 
+    Task<List<SensorReading>> ListAllTrackedAsync(CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

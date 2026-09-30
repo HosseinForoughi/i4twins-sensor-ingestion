@@ -91,4 +91,14 @@ public class SensorReading
         _violations.Add(violation);
         Classification = ReadingClassification.Unacceptable;
     }
+
+    public void ApplyRuleViolation(ReadingViolation violation)
+    {
+        ArgumentNullException.ThrowIfNull(violation);
+
+        if (_violations.Any(v => v.RuleId == violation.RuleId)) return;
+
+        _violations.Add(violation);
+        Classification = ReadingClassification.Unacceptable;
+    }
 }

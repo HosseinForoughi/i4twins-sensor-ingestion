@@ -2,14 +2,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorIngestion.Application.Options;
 using SensorIngestion.Application.UseCases.EvaluateRules;
+using SensorIngestion.Application.UseCases.EvaluateSustainedAbove;
 using SensorIngestion.Application.UseCases.IngestReadings;
 using SensorIngestion.Application.UseCases.SeedRules;
+using SensorIngestion.Domain.Alerting.Abstractions;
+using SensorIngestion.Domain.Alerting.Implementations;
 using SensorIngestion.Domain.Deduplication.Abstractions;
 using SensorIngestion.Domain.Deduplication.Implementations;
 using SensorIngestion.Domain.Operators.Abstractions;
 using SensorIngestion.Domain.Operators.Implementations;
 using SensorIngestion.Domain.Rules.Abstractions;
 using SensorIngestion.Domain.Rules.Implementations;
+using SensorIngestion.Domain.SustainedAbove.Abstractions;
+using SensorIngestion.Domain.SustainedAbove.Implementations;
 using SensorIngestion.Domain.Validation.Abstractions;
 using SensorIngestion.Domain.Validation.Implementations;
 using SensorIngestion.Domain.Validation.Implementations.Rules;
@@ -25,12 +30,14 @@ public static class DependencyInjection
 
         services.Configure<RulesOptions>(configuration.GetSection(RulesOptions.SectionName));
         services.Configure<ReadingsOptions>(configuration.GetSection(ReadingsOptions.SectionName));
+        services.Configure<AlertingOptions>(configuration.GetSection(AlertingOptions.SectionName));
 
         AddDomainServices(services);
 
         services.AddScoped<SeedRulesUseCase>();
         services.AddScoped<IngestReadingsUseCase>();
         services.AddScoped<EvaluateInstantaneousRulesUseCase>();
+        services.AddScoped<EvaluateSustainedAboveUseCase>();
 
         return services;
     }
@@ -55,5 +62,9 @@ public static class DependencyInjection
         services.AddSingleton<IOperatorEvaluatorRegistry, OperatorEvaluatorRegistry>();
 
         services.AddSingleton<IInstantaneousRuleEngine, InstantaneousRuleEngine>();
+
+        services.AddSingleton<ISustainedAboveEvaluator, BatchSustainedAboveEvaluator>();
+        services.AddSingleton<ISustainedAboveViolationApplier, SustainedAboveViolationApplier>();
+        services.AddSingleton<IAlertCooldownFilter, AlertCooldownFilter>();
     }
 }

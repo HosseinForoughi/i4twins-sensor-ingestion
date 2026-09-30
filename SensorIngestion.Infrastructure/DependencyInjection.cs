@@ -34,6 +34,7 @@ public static class DependencyInjection
 
         services.AddScoped<IRuleRepository, RuleRepository>();
         services.AddScoped<IReadingRepository, ReadingRepository>();
+        services.AddScoped<IAlertRepository, AlertRepository>();
     }
 
     private static void AddRulesSeed(IServiceCollection services)

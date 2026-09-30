@@ -31,7 +31,7 @@ public class ReadingRepository : IReadingRepository
             .ToListAsync(cancellationToken);
 
         var existingSet = existingKeys.Select(k => (k.DeviceId, k.Metric, k.Timestamp, k.Sequence))
-            .ToHashSet();
+          .ToHashSet();
 
         var toInsert = new List<SensorReading>();
 
@@ -57,9 +57,15 @@ public class ReadingRepository : IReadingRepository
 
     public async Task<List<SensorReading>> ListUnprocessedAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Readings.Include(r => r.Violations)
+        return await _dbContext.Readings
+            .Include(r => r.Violations)
             .Where(r => r.Classification == ReadingClassification.Unprocessed)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<SensorReading>> ListAllTrackedAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Readings.Include(r => r.Violations).ToListAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
