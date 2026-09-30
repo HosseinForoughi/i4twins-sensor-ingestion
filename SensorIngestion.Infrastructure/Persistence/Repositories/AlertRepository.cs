@@ -22,11 +22,14 @@ public class AlertRepository : IAlertRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
         ArgumentException.ThrowIfNullOrWhiteSpace(metric);
 
-        return await _dbContext.Alerts
+        var alerts = await _dbContext.Alerts
             .AsNoTracking()
             .Where(a => a.RuleId == ruleId && a.DeviceId == deviceId && a.Metric == metric)
-            .OrderBy(a => a.StartTs)
             .ToListAsync(cancellationToken);
+
+        return alerts
+            .OrderBy(a => a.StartTs)
+            .ToList();
     }
 
     public async Task<int> InsertNewAsync(List<Alert> alerts, CancellationToken cancellationToken = default)

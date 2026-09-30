@@ -93,12 +93,15 @@ public class ReadingRepository : IReadingRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
         ArgumentException.ThrowIfNullOrWhiteSpace(metric);
 
-        return await _dbContext.Readings
+        var readings = await _dbContext.Readings
             .Include(r => r.Violations)
             .Where(r => r.DeviceId == deviceId && r.Metric == metric)
+            .ToListAsync(cancellationToken);
+
+        return readings
             .OrderBy(r => r.Timestamp)
             .ThenBy(r => r.Sequence)
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
