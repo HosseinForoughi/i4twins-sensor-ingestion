@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SensorIngestion.Application.Abstractions;
 using SensorIngestion.Infrastructure.Persistence;
 using SensorIngestion.Infrastructure.Persistence.Repositories;
+using SensorIngestion.Infrastructure.Readings;
 using SensorIngestion.Infrastructure.Rules;
 
 namespace SensorIngestion.Infrastructure;
@@ -17,6 +18,7 @@ public static class DependencyInjection
 
         AddPersistence(services, configuration);
         AddRulesSeed(services);
+        AddReadingsSource(services);
 
         return services;
     }
@@ -36,5 +38,10 @@ public static class DependencyInjection
     private static void AddRulesSeed(IServiceCollection services)
     {
         services.AddScoped<IRulesSeedSource, JsonRulesSeedSource>();
+    }
+
+    private static void AddReadingsSource(IServiceCollection services)
+    {
+        services.AddScoped<IReadingsSource, JsonlReadingsSource>();
     }
 }
