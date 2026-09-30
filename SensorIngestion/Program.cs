@@ -1,15 +1,25 @@
+using SensorIngestion.Application;
+using SensorIngestion.Application.UseCases.SeedRules;
 using SensorIngestion.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration;
 
-builder.Services.AddInfrastructure(configuration);
+builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+await app.Services.MigrateAsync();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seedRules = scope.ServiceProvider.GetRequiredService<SeedRulesUseCase>();
+    await seedRules.ExecuteAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
