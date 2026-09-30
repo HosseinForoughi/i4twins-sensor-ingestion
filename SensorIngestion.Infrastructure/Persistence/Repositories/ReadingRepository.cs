@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SensorIngestion.Application.Abstractions;
 using SensorIngestion.Domain.Entities;
+using SensorIngestion.Domain.Enums;
 
 namespace SensorIngestion.Infrastructure.Persistence.Repositories;
 
@@ -17,7 +18,8 @@ public class ReadingRepository : IReadingRepository
     {
         ArgumentNullException.ThrowIfNull(readings);
 
-        if (readings.Count == 0) return 0;
+        if (readings.Count == 0)
+            return 0;
 
         var deviceIds = readings.Select(r => r.DeviceId).Distinct().ToList();
         var metrics = readings.Select(r => r.Metric).Distinct().ToList();
@@ -51,5 +53,17 @@ public class ReadingRepository : IReadingRepository
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.Readings.CountAsync(cancellationToken);
+    }
+
+    public async Task<List<SensorReading>> ListUnprocessedAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Readings.Include(r => r.Violations)
+            .Where(r => r.Classification == ReadingClassification.Unprocessed)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 }
