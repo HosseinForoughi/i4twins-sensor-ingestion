@@ -7,6 +7,8 @@
     <UserSecretsId>65c17c66-31a2-43d5-a526-675648620953</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +27,17 @@
   <ItemGroup>
     <ProjectReference Include="..\SensorIngestion.Infrastructure\SensorIngestion.Infrastructure.csproj" />
   </ItemGroup>
+
+  <Target Name="CopyApplicationXmlDocumentation" AfterTargets="Build">
+    <PropertyGroup>
+      <_ApplicationXml>$(MSBuildThisFileDirectory)..\SensorIngestion.Application\bin\$(Configuration)\$(TargetFramework)\SensorIngestion.Application.xml</_ApplicationXml>
+    </PropertyGroup>
+    <Copy
+      SourceFiles="$(_ApplicationXml)"
+      DestinationFolder="$(OutputPath)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_ApplicationXml)')" />
+  </Target>
 
   <ItemGroup>
     <Content Update="appsettings.json">

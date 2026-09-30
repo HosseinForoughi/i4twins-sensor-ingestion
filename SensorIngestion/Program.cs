@@ -1,3 +1,4 @@
+using SensorIngestion.Api.Swagger;
 using SensorIngestion.Application;
 using SensorIngestion.Application.UseCases.SeedRules;
 using SensorIngestion.Infrastructure;
@@ -9,7 +10,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSensorIngestionSwagger();
 
 var app = builder.Build();
 
@@ -21,11 +22,12 @@ using (var scope = app.Services.CreateScope())
     await seedRules.ExecuteAsync();
 }
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Sensor Ingestion API v1");
+    options.DocumentTitle = "Sensor Ingestion API";
+});
 
 app.UseHttpsRedirection();
 

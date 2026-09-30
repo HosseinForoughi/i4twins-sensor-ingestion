@@ -4,6 +4,9 @@ using SensorIngestion.Application.UseCases.IngestReadings;
 
 namespace SensorIngestion.Application.UseCases.ProcessPipeline;
 
+/// <summary>
+/// Combined processing report returned by <c>POST /api/ingest</c>.
+/// </summary>
 public class ProcessPipelineResult
 {
     public ProcessPipelineResult(
@@ -18,9 +21,18 @@ public class ProcessPipelineResult
             ?? throw new ArgumentNullException(nameof(sustainedAbove));
     }
 
+    /// <summary>
+    /// Counts from JSONL load, validation, deduplication, and persistence.
+    /// </summary>
     public IngestReadingsResult Ingest { get; }
 
+    /// <summary>
+    /// Counts from instantaneous (non-stateful) rule evaluation and classification.
+    /// </summary>
     public EvaluateInstantaneousRulesResult InstantaneousRules { get; }
 
+    /// <summary>
+    /// Counts from SustainedAbove episode detection, cooldown filtering, and alert inserts.
+    /// </summary>
     public EvaluateSustainedAboveResult SustainedAbove { get; }
 }
