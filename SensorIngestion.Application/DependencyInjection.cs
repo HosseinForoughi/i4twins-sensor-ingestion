@@ -3,7 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using SensorIngestion.Application.Options;
 using SensorIngestion.Application.UseCases.EvaluateRules;
 using SensorIngestion.Application.UseCases.EvaluateSustainedAbove;
+using SensorIngestion.Application.UseCases.GetAggregates;
 using SensorIngestion.Application.UseCases.IngestReadings;
+using SensorIngestion.Application.UseCases.ProcessPipeline;
 using SensorIngestion.Application.UseCases.SeedRules;
 using SensorIngestion.Domain.Alerting.Abstractions;
 using SensorIngestion.Domain.Alerting.Implementations;
@@ -38,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<IngestReadingsUseCase>();
         services.AddScoped<EvaluateInstantaneousRulesUseCase>();
         services.AddScoped<EvaluateSustainedAboveUseCase>();
+        services.AddScoped<ProcessPipelineUseCase>();
+        services.AddScoped<GetAggregatesUseCase>();
 
         return services;
     }

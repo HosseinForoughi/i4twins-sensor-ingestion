@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SensorIngestion.Application.Abstractions;
 using SensorIngestion.Infrastructure.Persistence;
+using SensorIngestion.Infrastructure.Persistence.Queries;
 using SensorIngestion.Infrastructure.Persistence.Repositories;
 using SensorIngestion.Infrastructure.Readings;
 using SensorIngestion.Infrastructure.Rules;
@@ -35,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IRuleRepository, RuleRepository>();
         services.AddScoped<IReadingRepository, ReadingRepository>();
         services.AddScoped<IAlertRepository, AlertRepository>();
+        services.AddScoped<IReadingAggregationQuery, ReadingAggregationQuery>();
     }
 
     private static void AddRulesSeed(IServiceCollection services)
