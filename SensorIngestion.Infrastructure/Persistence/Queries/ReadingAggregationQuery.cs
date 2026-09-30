@@ -22,19 +22,21 @@ public class ReadingAggregationQuery : IReadingAggregationQuery
             .Where(r =>
                 r.DeviceId == request.DeviceId &&
                 r.Metric == request.Metric &&
-                r.Classification == ReadingClassification.Acceptable &&
-                r.Timestamp >= request.From &&
-                r.Timestamp < request.To)
+                r.Classification == ReadingClassification.Acceptable)
             .Select(r => new { r.Timestamp, r.Value })
             .ToListAsync(cancellationToken);
 
-        if (readings.Count == 0)
+        var inRange = readings
+            .Where(r => r.Timestamp >= request.From && r.Timestamp < request.To)
+            .ToList();
+
+        if (inRange.Count == 0)
             return [];
 
         var bucketSeconds = request.BucketSeconds;
         var from = request.From;
 
-        var buckets = readings
+        return inRange
             .GroupBy(r =>
             {
                 var offsetSeconds = (r.Timestamp - from).TotalSeconds;
@@ -53,7 +55,5 @@ public class ReadingAggregationQuery : IReadingAggregationQuery
                     max: values.Max());
             })
             .ToList();
-
-        return buckets;
     }
 }
